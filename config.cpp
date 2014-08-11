@@ -17,5 +17,4 @@ char* PathToVideo = "/home/iryna/Dropbox/GL Project/del/conv.avi";
 
 int lastX1 = 110, lastY1 = 0;
 int lastX2 = 160, lastY2 = 300;
-IplImage* frame2 = 0;
 unsigned DetectedBread = 0;

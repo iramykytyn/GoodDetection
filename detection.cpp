@@ -1,5 +1,5 @@
 /**
- * @file	detectobjects.cpp
+ * @file	detection.cpp
  * @brief	Searching objects on image implementation
  * @author  Iryna Mykytyn
  *
@@ -13,8 +13,6 @@
  **/
 
 #include "detection.h"
-
-
 
 extern int lastX1;
 extern int lastY1;
@@ -30,42 +28,49 @@ int StartDetection ( GOODS type_of_good )
     switch ( type_of_good )
     {
     case BLACK_BREAD:
-        DetectBread( frame );
+        MakeBreadDetection();
         break;
     case WHITE_BREAD:
-        DetectBread( frame );
+        MakeBreadDetection();
         break;
     default:
-
+        return ERROR_001;
     }
+    return OK;
 }
 
 
 
+int MakeBreadDetection(void)
+{
+    IplImage *Frame;
+    while( Frame = GetImageFromWemcam() ) // -> GetImageFromWemcam() - function from Roma code sources, that get frame from webcam and return pointer to Image
+    {
+        DetectBread( Frame );           // -> find bread on current Frame
+    }
+    return OK;
+}
+
+
 void DetectBread( IplImage* frame)
 {
-    IplImage *copy_of_frame = cvCreateImage(cvGetSize(frame2), 8, 1);
-   // cvCvtColor(frame2,frame,CV_BGR2GRAY);
 
-    cvSetImageROI(frame, cvRect( lastX1 ,lastY1,lastX2 - lastX1,lastY2 - lastY1 ) );
     cvThreshold(frame,frame,100,255,CV_THRESH_BINARY);
     cvSmooth(frame, frame, CV_GAUSSIAN,3,3);
     cvCanny( frame, frame, 10, 100, 3);
 
-    // создаём ядро
-    int radius = 1;
+    const int radius = 1;
     IplConvKernel* Kern = cvCreateStructuringElementEx(radius*2+1, radius*2+1, radius, radius, CV_SHAPE_ELLIPSE);
-
     cvDilate(frame, frame, Kern,0);
 
-        CvSeq* contour;
-        CvMemStorage *storage = cvCreateMemStorage(0);
+     CvSeq* contour;
+     CvMemStorage *storage = cvCreateMemStorage(0);
 
-        //finding all contours in the image
-        cvFindContours(imgThresh, storage, &contour, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+     //finding all contours in the image
+     cvFindContours(frame, storage, &contour, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
 
-        for( CvSeq* current = contour; current != NULL; current = current->h_next )
-        {
+     for( CvSeq* current = contour; current != NULL; current = current->h_next )
+     {
                         //obtain a sequence of points of the countour, pointed by the variable 'countour'
                         //current = cvApproxPoly(contour, sizeof(CvContour), storage, CV_POLY_APPROX_DP, cvContourPerimeter(contour)*0.02, 0);
 
@@ -85,8 +90,6 @@ void DetectBread( IplImage* frame)
                                      if( it == DetectedPoints.end())
                                      {
                                          DetectedPoints.push_back( Point(rect.center.x, rect.center.y) );
-                                        // qDebug()<<"x:"<<rect.center.x<<", y = "<<rect.center.y ;
-
                                         if( ( rect.center.x <= (lastX2 - lastX1 )/2 + 0.2 )  && ( rect.center.x >= (lastX2 - lastX1)/2 - 0.2 ) )
                                         {
                                             ++DetectedBread;
@@ -110,10 +113,15 @@ void DetectBread( IplImage* frame)
                              }
                         }
         }
-
-
         cvReleaseMemStorage(&storage);
  }
+
+IplImage* GetImageFromWemcam()
+{
+
+    return NULL;
+}
+
 
 
 void SetScope( void )
